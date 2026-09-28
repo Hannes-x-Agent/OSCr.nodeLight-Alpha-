@@ -65,4 +65,4 @@ jobs:
         run: |
           gh release create "$GITHUB_REF_NAME" release/* \
             --title "OSCrnode Light 0.1A" \
-            --notes "First alpha release of the modular osc.js control surface. macOS is for Apple Silicon; Windows is for 64-bit PCs."
+            --notes "OSCrnode Light 0.1A with Geist bundled throughout and baked into the logo for consistent Windows and macOS rendering. macOS is for Apple Silicon; Windows is for 64-bit PCs."

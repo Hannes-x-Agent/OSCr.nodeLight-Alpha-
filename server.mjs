@@ -45,10 +45,6 @@ const files = new Map([
   ["/styles.css", [path.join(publicRoot, "styles.css"), "text/css; charset=utf-8"]],
   ["/app.js", [path.join(publicRoot, "app.js"), "text/javascript; charset=utf-8"]],
   [
-    "/assets/OSCrnodeLightLogo.svg",
-    [path.join(publicRoot, "assets", "OSCrnodeLightLogo.svg"), "image/svg+xml; charset=utf-8"],
-  ],
-  [
     "/fonts/Geist-Variable.woff2",
     [path.join(publicRoot, "fonts", "Geist-Variable.woff2"), "font/woff2"],
   ],
@@ -57,6 +53,30 @@ const files = new Map([
     [path.join(root, "node_modules", "osc", "dist", "osc-browser.min.js"), "text/javascript; charset=utf-8"],
   ],
 ]);
+
+let bakedLogo = null;
+
+async function serveBakedLogo(response) {
+  try {
+    if (!bakedLogo) {
+      const [svg, font] = await Promise.all([
+        readFile(path.join(publicRoot, "assets", "OSCrnodeLightLogo.svg"), "utf8"),
+        readFile(path.join(publicRoot, "fonts", "Geist-Variable.woff2")),
+      ]);
+      const embeddedFont = `data:font/woff2;base64,${font.toString("base64")}`;
+      bakedLogo = Buffer.from(svg.replaceAll("../fonts/Geist-Variable.woff2", embeddedFont));
+    }
+    response.writeHead(200, {
+      "Cache-Control": "no-store",
+      "Content-Length": bakedLogo.length,
+      "Content-Type": "image/svg+xml; charset=utf-8",
+    });
+    response.end(bakedLogo);
+  } catch {
+    response.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
+    response.end("Not found");
+  }
+}
 
 function sendJson(response, status, data) {
   const body = JSON.stringify(data);
@@ -112,6 +132,11 @@ async function serveFile(response, absolutePath, contentType) {
 
 const server = http.createServer(async (request, response) => {
   const url = new URL(request.url || "/", `http://${request.headers.host || "localhost"}`);
+
+  if (request.method === "GET" && url.pathname === "/assets/OSCrnodeLightLogo.svg") {
+    await serveBakedLogo(response);
+    return;
+  }
 
   if (request.method === "GET" && url.pathname === "/api/status") {
     sendJson(response, 200, { ok: true, udpReady, target, sentCount });

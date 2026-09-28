@@ -35,7 +35,7 @@ The app is distributed as a self-contained desktop download. No Node.js installa
 - Collapse control anchored at the far-right edge of every module header
 - Control-locked and fully locked modules use a bright-red background, white text, and subdued locked content
 - Interface zoom from 70% to 140%
-- Locally bundled Geist typeface
+- Geist is bundled for the full interface and baked directly into the SVG logo for consistent rendering on Mac and Windows
 
 ## XY address modes
 

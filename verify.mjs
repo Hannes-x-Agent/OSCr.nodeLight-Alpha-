@@ -58,6 +58,17 @@ try {
   assert.equal(htmlResponse.status, 200);
   assert.match(await htmlResponse.text(), /OSCrnode Light 0\.1A/);
 
+  const fontResponse = await fetch(`${baseUrl}/fonts/Geist-Variable.woff2`);
+  assert.equal(fontResponse.status, 200);
+  assert.equal(fontResponse.headers.get("content-type"), "font/woff2");
+  assert.ok((await fontResponse.arrayBuffer()).byteLength > 60_000);
+
+  const logoResponse = await fetch(`${baseUrl}/assets/OSCrnodeLightLogo.svg`);
+  assert.equal(logoResponse.status, 200);
+  const logo = await logoResponse.text();
+  assert.match(logo, /data:font\/woff2;base64,/);
+  assert.doesNotMatch(logo, /\.\.\/fonts\/Geist-Variable\.woff2/);
+
   const targetResponse = await fetch(`${baseUrl}/api/target`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -92,7 +103,7 @@ try {
   assert.ok(Math.abs(message.args[0].value - 0.75) < 0.0001);
 
   webSocketPort.close();
-  console.log("PASS: browser WebSocket -> osc.js bridge -> UDP OSC");
+  console.log("PASS: baked Geist assets and browser WebSocket -> osc.js bridge -> UDP OSC");
 } finally {
   receiver.close();
   if (externalUrl && originalTarget) {

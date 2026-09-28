@@ -161,6 +161,8 @@ try {
   const logoSource = await (await fetch(`${baseUrl}/assets/OSCrnodeLightLogo.svg`)).text();
   assert.match(logoSource, /viewBox="0 0 1864\.55 305\.52"/);
   assert.match(logoSource, /\.cls-29 \{ fill: red; \}/);
+  assert.match(logoSource, /data:font\/woff2;base64,/);
+  assert.doesNotMatch(logoSource, /\.\.\/fonts\/Geist-Variable\.woff2/);
 
   assert.deepEqual(await evaluate(`(() => ({
     logoSource: new URL(document.querySelector('.brand-logo').src).pathname,
