@@ -20,6 +20,7 @@ const lockLabel = document.querySelector("#lockLabel");
 const zoomValue = document.querySelector("#zoomValue");
 const logToggleButton = document.querySelector("#logToggleButton");
 const saveStatus = document.querySelector("#saveStatus");
+const debugReceiverButton = document.querySelector("#debugReceiverButton");
 
 let oscPort = null;
 let connectionState = "disconnected";
@@ -1061,6 +1062,10 @@ function applyLogVisibility() {
 connectionButton.addEventListener("click", () => {
   if (connectionState === "connected" || connectionState === "connecting") disconnect();
   else connect();
+});
+
+debugReceiverButton.addEventListener("click", () => {
+  window.open("/debug.html", "oscrnode-debug", "popup,width=900,height=760");
 });
 
 targetForm.addEventListener("submit", async (event) => {

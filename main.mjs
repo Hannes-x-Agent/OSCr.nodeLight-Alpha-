@@ -4,12 +4,35 @@ import { app, BrowserWindow, dialog, Menu, shell } from "electron";
 
 const root = path.dirname(fileURLToPath(import.meta.url));
 let mainWindow = null;
+let debugWindow = null;
 let bridge = null;
 let bridgeUrl = null;
 let quitting = false;
 
 const hasLock = app.requestSingleInstanceLock();
 if (!hasLock) app.quit();
+
+function createDebugWindow() {
+  if (debugWindow && !debugWindow.isDestroyed()) {
+    if (debugWindow.isMinimized()) debugWindow.restore();
+    debugWindow.focus();
+    return;
+  }
+  debugWindow = new BrowserWindow({
+    width: 900,
+    height: 760,
+    minWidth: 520,
+    minHeight: 520,
+    show: false,
+    backgroundColor: "#ffffff",
+    title: "OSCrnode OSC Debug Receiver",
+    icon: path.join(root, "assets", "icon.png"),
+    webPreferences: { contextIsolation: true, nodeIntegration: false, sandbox: true },
+  });
+  debugWindow.loadURL(new URL("/debug.html", bridgeUrl).href);
+  debugWindow.once("ready-to-show", () => debugWindow.show());
+  debugWindow.on("closed", () => { debugWindow = null; });
+}
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -31,6 +54,10 @@ function createWindow() {
   mainWindow.loadURL(bridgeUrl);
   mainWindow.once("ready-to-show", () => mainWindow.show());
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    if (url === new URL("/debug.html", bridgeUrl).href) {
+      createDebugWindow();
+      return { action: "deny" };
+    }
     if (url.startsWith("https://") || url.startsWith("http://")) shell.openExternal(url);
     return { action: "deny" };
   });

@@ -1,0 +1,65 @@
+@font-face {
+  font-family: "Geist";
+  src: url("/fonts/Geist-Variable.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: block;
+}
+
+:root { color-scheme: light; font-family: "Geist", Arial, sans-serif; --black: #0a0a0a; --white: #fff; --grey: #686868; --red: #f00; --green: #00a83c; }
+* { box-sizing: border-box; }
+body, button, input { font-family: "Geist", Arial, sans-serif; }
+body { margin: 0; min-width: 420px; color: var(--black); background: var(--white); }
+button, input { font: inherit; }
+button { cursor: pointer; }
+.debug-shell { width: min(920px, calc(100% - 28px)); margin: 0 auto; padding: 22px 0 30px; }
+.debug-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+.kicker { margin: 0 0 5px; color: var(--grey); font-size: 0.64rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; }
+h1, h2, p { margin: 0; }
+h1 { font-size: clamp(1.8rem, 4vw, 3.2rem); font-weight: 720; letter-spacing: -0.055em; line-height: 0.95; }
+h2 { font-size: 1.05rem; letter-spacing: -0.025em; }
+h2 span { display: inline-grid; min-width: 24px; height: 24px; margin-left: 5px; place-items: center; border: 1.5px solid var(--black); border-radius: 50%; font-size: 0.62rem; vertical-align: middle; }
+.status-pill { display: inline-flex; min-height: 34px; align-items: center; gap: 7px; padding: 0 12px; border: 1.5px solid var(--black); border-radius: 999px; font-size: 0.72rem; font-weight: 660; white-space: nowrap; }
+.status-pill i { width: 8px; height: 8px; border: 1.5px solid currentColor; border-radius: 50%; background: transparent; }
+.status-pill.listening { color: var(--green); border-color: var(--green); }
+.status-pill.listening i { background: var(--green); }
+.status-pill.error { color: var(--red); border-color: var(--red); }
+.status-pill.error i { background: var(--red); }
+.notice { margin-bottom: 10px; padding: 12px 14px; border: 1.5px solid var(--black); border-radius: 8px; font-size: 0.78rem; line-height: 1.45; }
+.panel { border: 1.5px solid var(--black); border-radius: 9px; background: var(--white); }
+.controls-panel { padding: 12px; }
+#listenForm { display: grid; grid-template-columns: minmax(130px, 1fr) auto auto auto; gap: 7px; align-items: end; }
+label { display: grid; gap: 5px; }
+label span, .route-help span { color: var(--grey); font-size: 0.62rem; font-weight: 640; }
+input { width: 100%; min-height: 38px; padding: 0 10px; border: 1.5px solid var(--black); border-radius: 5px; outline: none; }
+input:focus { box-shadow: 0 0 0 2px var(--black); }
+.primary-button, .outline-button { min-height: 38px; padding: 0 13px; border: 1.5px solid var(--black); border-radius: 5px; font-size: 0.75rem; font-weight: 660; }
+.primary-button { color: var(--white); background: var(--black); }
+.outline-button { color: var(--black); background: var(--white); }
+.primary-button:hover { color: var(--black); background: var(--white); }
+.outline-button:hover { color: var(--white); background: var(--black); }
+.route-help { display: grid; grid-template-columns: 1fr 2fr; gap: 16px; margin-top: 12px; padding-top: 10px; border-top: 1px solid #d8d8d8; }
+.route-help p, .route-help > div { display: grid; gap: 3px; }
+.route-help strong { font-size: 0.86rem; font-variant-numeric: tabular-nums; }
+.address-list { display: flex; flex-wrap: wrap; gap: 5px; }
+.address-list code { padding: 3px 6px; border: 1px solid var(--black); border-radius: 4px; font-family: "Geist", sans-serif; font-size: 0.68rem; }
+.log-panel { margin-top: 10px; padding: 13px; }
+.log-header { display: flex; align-items: center; justify-content: space-between; gap: 15px; padding-bottom: 11px; border-bottom: 1.5px solid var(--black); }
+.log-actions { display: flex; gap: 8px; }
+.text-button { border: 0; color: var(--grey); background: transparent; font-size: 0.7rem; }
+.text-button:hover { color: var(--black); }
+#packetLog { display: grid; max-height: 54vh; align-content: start; margin: 0; padding: 0; overflow: auto; list-style: none; }
+#packetLog li:not(.empty) { display: grid; grid-template-columns: 74px minmax(120px, 0.8fr) minmax(160px, 1fr) minmax(180px, 1.4fr); gap: 8px; padding: 9px 2px; border-bottom: 1px solid #dedede; font-size: 0.7rem; }
+#packetLog time, .packet-source { color: var(--grey); font-variant-numeric: tabular-nums; }
+.packet-address { overflow: hidden; font-weight: 680; text-overflow: ellipsis; white-space: nowrap; }
+.packet-values { overflow-wrap: anywhere; }
+.packet-values code { font-family: "Geist", sans-serif; font-size: 0.66rem; }
+.empty { padding: 30px 4px; color: var(--grey); font-size: 0.76rem; text-align: center; }
+.footnote { padding: 11px 3px 0; color: var(--grey); font-size: 0.7rem; line-height: 1.45; }
+.footnote strong { color: var(--black); font-variant-numeric: tabular-nums; }
+@media (max-width: 760px) {
+  #listenForm { grid-template-columns: 1fr 1fr; }
+  .route-help { grid-template-columns: 1fr; }
+  #packetLog li:not(.empty) { grid-template-columns: 68px 1fr; }
+  .packet-address, .packet-values { grid-column: 2; }
+}

@@ -28,6 +28,7 @@ The app is distributed as a self-contained desktop download. No Node.js installa
 - Add unlimited custom message senders
 - Sticky side area with a live Devices list and Activity log, plus a shared show/hide toggle
 - Devices list mirrors every module/custom sender and flashes green with its most recent locally sent OSC payload
+- Separate OSC Debug Receiver window with configurable UDP listen port, typed incoming packet log, local network addresses, pause/clear controls, and a self-test message
 - Green live and connected status indicators
 - Exact supplied `OSCrnodeLightLogo.svg`, bundled with Geist font references
 - Short compact Destination panel and tighter section spacing
@@ -35,7 +36,7 @@ The app is distributed as a self-contained desktop download. No Node.js installa
 - Collapse control anchored at the far-right edge of every module header
 - Control-locked and fully locked modules use a bright-red background, white text, and subdued locked content
 - Interface zoom from 70% to 140%
-- Geist is bundled for the full interface and baked directly into the SVG logo for consistent rendering on Mac and Windows
+- The original supplied SVG logo remains untouched; Geist is baked into the interface stylesheet for consistent rendering on Mac and Windows
 
 ## XY address modes
 
@@ -44,6 +45,18 @@ For a two-point pad with base address `/position`, value names `x1`, `y1`, `x2`,
 - Together: `/position [x1, y1, x2, y2]`
 - Paired: `/position/a [x1, y1]` and `/position/b [x2, y2]`
 - Individual: `/position/x1`, `/position/y1`, `/position/x2`, `/position/y2`
+
+## Check an OSC connection
+
+OSC over UDP has no connection handshake. The green **Connected** indicator confirms that the interface is connected to its local OSC bridge; it cannot confirm that another application or computer received a UDP packet.
+
+1. Click **OSC debug** to open the separate Debug Receiver window.
+2. Choose a listen port, such as `9000`, and click **Start listening**.
+3. For a same-computer test, set the main sender destination to `127.0.0.1` and the same port.
+4. Move a slider or press a button. The incoming OSC address, source, type tags, and values should appear in the receiver.
+5. Use **Send local test** to check the receiver itself before testing another sender.
+
+For another computer, use one of the network addresses shown by the Debug Receiver and allow incoming UDP traffic through the operating-system firewall.
 
 ## Position presets
 

@@ -1,6 +1,7 @@
 import { createReadStream } from "node:fs";
 import { mkdir, readFile, rename, stat, unlink, writeFile } from "node:fs/promises";
 import http from "node:http";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import osc from "osc";
@@ -25,6 +26,9 @@ const target = {
 let udpReady = false;
 let sentCount = 0;
 let stopPromise = null;
+let debugReceiver = null;
+let debugState = { listening: false, port: 9000, count: 0, error: null, lastMessage: null };
+const debugEventClients = new Set();
 
 let resolveServerReady;
 let rejectServerReady;
@@ -42,8 +46,13 @@ const udpPort = new osc.UDPPort({
 const files = new Map([
   ["/", [path.join(publicRoot, "index.html"), "text/html; charset=utf-8"]],
   ["/index.html", [path.join(publicRoot, "index.html"), "text/html; charset=utf-8"]],
-  ["/styles.css", [path.join(publicRoot, "styles.css"), "text/css; charset=utf-8"]],
   ["/app.js", [path.join(publicRoot, "app.js"), "text/javascript; charset=utf-8"]],
+  ["/debug.html", [path.join(publicRoot, "debug.html"), "text/html; charset=utf-8"]],
+  ["/debug.js", [path.join(publicRoot, "debug.js"), "text/javascript; charset=utf-8"]],
+  [
+    "/assets/OSCrnodeLightLogo.svg",
+    [path.join(publicRoot, "assets", "OSCrnodeLightLogo.svg"), "image/svg+xml; charset=utf-8"],
+  ],
   [
     "/fonts/Geist-Variable.woff2",
     [path.join(publicRoot, "fonts", "Geist-Variable.woff2"), "font/woff2"],
@@ -54,28 +63,113 @@ const files = new Map([
   ],
 ]);
 
-let bakedLogo = null;
+const bakedStyles = new Map();
 
-async function serveBakedLogo(response) {
+async function serveBakedStyles(response, fileName) {
   try {
-    if (!bakedLogo) {
-      const [svg, font] = await Promise.all([
-        readFile(path.join(publicRoot, "assets", "OSCrnodeLightLogo.svg"), "utf8"),
+    if (!bakedStyles.has(fileName)) {
+      const [styles, font] = await Promise.all([
+        readFile(path.join(publicRoot, fileName), "utf8"),
         readFile(path.join(publicRoot, "fonts", "Geist-Variable.woff2")),
       ]);
       const embeddedFont = `data:font/woff2;base64,${font.toString("base64")}`;
-      bakedLogo = Buffer.from(svg.replaceAll("../fonts/Geist-Variable.woff2", embeddedFont));
+      bakedStyles.set(fileName, Buffer.from(styles.replaceAll("/fonts/Geist-Variable.woff2", embeddedFont)));
     }
+    const body = bakedStyles.get(fileName);
     response.writeHead(200, {
       "Cache-Control": "no-store",
-      "Content-Length": bakedLogo.length,
-      "Content-Type": "image/svg+xml; charset=utf-8",
+      "Content-Length": body.length,
+      "Content-Type": "text/css; charset=utf-8",
     });
-    response.end(bakedLogo);
+    response.end(body);
   } catch {
     response.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
     response.end("Not found");
   }
+}
+
+function localAddresses() {
+  const addresses = new Set(["127.0.0.1"]);
+  for (const interfaces of Object.values(os.networkInterfaces())) {
+    for (const details of interfaces || []) {
+      if (details.family === "IPv4" && !details.internal) addresses.add(details.address);
+    }
+  }
+  return [...addresses];
+}
+
+function debugStatus() {
+  return { ...debugState, addresses: localAddresses() };
+}
+
+function broadcastDebug(event, data) {
+  const payload = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
+  for (const client of debugEventClients) client.write(payload);
+}
+
+function serializableArgument(argument) {
+  const value = argument?.value;
+  return {
+    type: argument?.type || typeof value,
+    value: Buffer.isBuffer(value) ? `<blob ${value.length} bytes>` : value,
+  };
+}
+
+async function stopDebugReceiver() {
+  const receiver = debugReceiver;
+  debugReceiver = null;
+  debugState = { ...debugState, listening: false, error: null };
+  if (!receiver) return;
+  await new Promise((resolve) => {
+    let resolved = false;
+    const finish = () => {
+      if (resolved) return;
+      resolved = true;
+      resolve();
+    };
+    receiver.once("close", finish);
+    try { receiver.close(); } catch { finish(); }
+    setTimeout(finish, 250);
+  });
+}
+
+async function startDebugReceiver(port) {
+  await stopDebugReceiver();
+  const receiver = new osc.UDPPort({ localAddress: "0.0.0.0", localPort: port, metadata: true });
+  debugReceiver = receiver;
+  await new Promise((resolve, reject) => {
+    const onReady = () => {
+      receiver.off("error", onOpeningError);
+      debugState = { listening: true, port, count: 0, error: null, lastMessage: null };
+      broadcastDebug("status", debugStatus());
+      resolve();
+    };
+    const onOpeningError = (error) => {
+      receiver.off("ready", onReady);
+      debugReceiver = null;
+      debugState = { ...debugState, listening: false, port, error: error.message };
+      reject(error);
+    };
+    receiver.once("ready", onReady);
+    receiver.once("error", onOpeningError);
+    receiver.open();
+  });
+  receiver.on("message", (message, _timeTag, info = {}) => {
+    const entry = {
+      timestamp: new Date().toISOString(),
+      source: `${info.address || "unknown"}:${info.port || "?"}`,
+      address: message.address,
+      args: (message.args || []).map(serializableArgument),
+    };
+    debugState = { ...debugState, count: debugState.count + 1, lastMessage: entry };
+    broadcastDebug("message", entry);
+    broadcastDebug("status", debugStatus());
+  });
+  receiver.on("error", (error) => {
+    debugState = { ...debugState, listening: false, error: error.message };
+    broadcastDebug("status", debugStatus());
+  });
+  return debugStatus();
 }
 
 function sendJson(response, status, data) {
@@ -133,8 +227,55 @@ async function serveFile(response, absolutePath, contentType) {
 const server = http.createServer(async (request, response) => {
   const url = new URL(request.url || "/", `http://${request.headers.host || "localhost"}`);
 
-  if (request.method === "GET" && url.pathname === "/assets/OSCrnodeLightLogo.svg") {
-    await serveBakedLogo(response);
+  if (request.method === "GET" && (url.pathname === "/styles.css" || url.pathname === "/debug.css")) {
+    await serveBakedStyles(response, url.pathname.slice(1));
+    return;
+  }
+
+  if (request.method === "GET" && url.pathname === "/api/debug/status") {
+    sendJson(response, 200, { ok: true, ...debugStatus() });
+    return;
+  }
+
+  if (request.method === "GET" && url.pathname === "/api/debug/events") {
+    response.writeHead(200, {
+      "Cache-Control": "no-store",
+      Connection: "keep-alive",
+      "Content-Type": "text/event-stream; charset=utf-8",
+    });
+    response.write(`event: status\ndata: ${JSON.stringify(debugStatus())}\n\n`);
+    debugEventClients.add(response);
+    request.on("close", () => debugEventClients.delete(response));
+    return;
+  }
+
+  if (request.method === "POST" && url.pathname === "/api/debug/listen") {
+    try {
+      const { port } = validateTarget({ host: "127.0.0.1", ...(await readJson(request)) });
+      sendJson(response, 200, { ok: true, ...(await startDebugReceiver(port)) });
+    } catch (error) {
+      sendJson(response, 400, { ok: false, error: error.message });
+    }
+    return;
+  }
+
+  if (request.method === "POST" && url.pathname === "/api/debug/stop") {
+    await stopDebugReceiver();
+    broadcastDebug("status", debugStatus());
+    sendJson(response, 200, { ok: true, ...debugStatus() });
+    return;
+  }
+
+  if (request.method === "POST" && url.pathname === "/api/debug/self-test") {
+    if (!debugState.listening) {
+      sendJson(response, 409, { ok: false, error: "Start the debug receiver first" });
+      return;
+    }
+    udpPort.send({
+      address: "/oscrnode/debug/test",
+      args: [{ type: "s", value: "hello" }, { type: "f", value: 0.5 }, { type: "i", value: 1 }],
+    }, "127.0.0.1", debugState.port);
+    sendJson(response, 200, { ok: true });
     return;
   }
 
@@ -258,6 +399,9 @@ export function stopServer() {
 
   stopPromise = new Promise((resolve) => {
     udpReady = false;
+    for (const client of debugEventClients) client.end();
+    debugEventClients.clear();
+    stopDebugReceiver().catch(() => {});
     for (const client of webSocketServer.clients) client.terminate();
     webSocketServer.close();
     try {

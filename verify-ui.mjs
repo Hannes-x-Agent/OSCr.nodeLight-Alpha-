@@ -161,8 +161,12 @@ try {
   const logoSource = await (await fetch(`${baseUrl}/assets/OSCrnodeLightLogo.svg`)).text();
   assert.match(logoSource, /viewBox="0 0 1864\.55 305\.52"/);
   assert.match(logoSource, /\.cls-29 \{ fill: red; \}/);
-  assert.match(logoSource, /data:font\/woff2;base64,/);
-  assert.doesNotMatch(logoSource, /\.\.\/fonts\/Geist-Variable\.woff2/);
+  assert.doesNotMatch(logoSource, /data:font\/woff2;base64,/);
+  assert.match(logoSource, /\.\.\/fonts\/Geist-Variable\.woff2/);
+
+  const stylesSource = await (await fetch(`${baseUrl}/styles.css`)).text();
+  assert.match(stylesSource, /data:font\/woff2;base64,/);
+  assert.doesNotMatch(stylesSource, /url\("\/fonts\/Geist-Variable\.woff2"\)/);
 
   assert.deepEqual(await evaluate(`(() => ({
     logoSource: new URL(document.querySelector('.brand-logo').src).pathname,
@@ -171,6 +175,7 @@ try {
     deletionLabel: document.querySelector('#lockLabel').textContent,
     deleteDisplay: getComputedStyle(document.querySelector('[data-module-id="slider-volume"] .delete-button')).display,
     deviceCountMatches: document.querySelectorAll('#deviceList li').length === document.querySelectorAll('.module-card, .custom-card').length,
+    debugReceiverLabel: document.querySelector('#debugReceiverButton').textContent,
   }))()`), {
     logoSource: "/assets/OSCrnodeLightLogo.svg",
     connectionColor: "rgb(0, 168, 60)",
@@ -178,6 +183,7 @@ try {
     deletionLabel: "Deletion locked",
     deleteDisplay: "none",
     deviceCountMatches: true,
+    debugReceiverLabel: "OSC debug",
   });
 
   const lockAndCollapse = await evaluate(`(() => {

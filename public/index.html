@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#ffffff" />
     <title>OSCrnode Light 0.1A</title>
-    <link rel="preload" href="/fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="stylesheet" href="/styles.css" />
     <script src="/vendor/osc-browser.min.js" defer></script>
     <script src="/app.js" defer></script>
@@ -26,6 +25,7 @@
             <output id="zoomValue">100%</output>
             <button id="zoomInButton" type="button" aria-label="Zoom in">+</button>
           </div>
+          <button class="tool-button" id="debugReceiverButton" type="button">OSC debug</button>
           <button class="tool-button" id="logToggleButton" type="button" aria-pressed="true">Hide log</button>
           <button class="connection" id="connectionButton" type="button">
             <span class="status-dot" aria-hidden="true"></span><span id="connectionLabel">Connect</span>

@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#ffffff" />
+    <title>OSCrnode OSC Debug Receiver</title>
+    <link rel="stylesheet" href="/debug.css" />
+    <script src="/debug.js" defer></script>
+  </head>
+  <body>
+    <main class="debug-shell">
+      <header class="debug-header">
+        <div>
+          <p class="kicker">OSCrnode utility</p>
+          <h1>OSC Debug Receiver</h1>
+        </div>
+        <span class="status-pill" id="statusPill"><i></i><span>Stopped</span></span>
+      </header>
+
+      <section class="notice">
+        <strong>UDP has no connection handshake.</strong>
+        A green “Connected” state in the sender only confirms its internal bridge. Seeing a packet below proves that OSC reached this computer and port.
+      </section>
+
+      <section class="panel controls-panel">
+        <form id="listenForm">
+          <label><span>Listen port</span><input id="listenPort" type="number" min="1" max="65535" value="9000" required /></label>
+          <button class="primary-button" type="submit">Start listening</button>
+          <button class="outline-button" id="stopButton" type="button">Stop</button>
+          <button class="outline-button" id="selfTestButton" type="button">Send local test</button>
+        </form>
+        <div class="route-help">
+          <p><span>Same computer target</span><strong id="loopbackTarget">127.0.0.1:9000</strong></p>
+          <div><span>Network addresses</span><div class="address-list" id="addressList"></div></div>
+        </div>
+      </section>
+
+      <section class="panel log-panel">
+        <div class="log-header">
+          <div><p class="kicker">Incoming UDP</p><h2>Received packets <span id="packetCount">0</span></h2></div>
+          <div class="log-actions">
+            <button class="text-button" id="pauseButton" type="button">Pause view</button>
+            <button class="text-button" id="clearButton" type="button">Clear</button>
+          </div>
+        </div>
+        <ol id="packetLog"><li class="empty">No packets received yet.</li></ol>
+      </section>
+
+      <p class="footnote">For a same-computer test, set the main sender destination to <strong id="footerTarget">127.0.0.1:9000</strong>, start listening, then move a slider. For another device, use one of the network addresses above.</p>
+    </main>
+  </body>
+</html>
