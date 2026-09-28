@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#ffffff" />
+    <title>OSCrnode Light 0.1A</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <script src="/vendor/osc-browser.min.js" defer></script>
+    <script src="/app.js" defer></script>
+  </head>
+  <body>
+    <div id="uiRoot">
+      <header class="topbar shell">
+        <div class="brand">
+          <img class="brand-logo" src="/assets/OSCrnodeLightLogo.svg" alt="OSCr.node.light v0.1A — Modular OSC interface by otherno.devs // echo\void;" />
+        </div>
+        <div class="top-actions">
+          <span class="save-status" id="saveStatus">Saved</span>
+          <button class="tool-button" id="titleLockButton" type="button" aria-pressed="false" title="Unlock deletion">
+            <span id="lockIcon" aria-hidden="true">🔒</span><span id="lockLabel">Deletion locked</span>
+          </button>
+          <div class="zoom-control" aria-label="Interface zoom">
+            <button id="zoomOutButton" type="button" aria-label="Zoom out">−</button>
+            <output id="zoomValue">100%</output>
+            <button id="zoomInButton" type="button" aria-label="Zoom in">+</button>
+          </div>
+          <button class="tool-button" id="logToggleButton" type="button" aria-pressed="true">Hide log</button>
+          <button class="connection" id="connectionButton" type="button">
+            <span class="status-dot" aria-hidden="true"></span><span id="connectionLabel">Connect</span>
+          </button>
+        </div>
+      </header>
+
+      <div class="workspace shell" id="workspace">
+        <main class="main-column">
+          <section class="destination panel" aria-labelledby="destinationTitle">
+            <div class="section-heading">
+              <div><p class="section-kicker">UDP output</p><h2 id="destinationTitle">Destination</h2></div>
+              <p class="helper">Set the host and port of your OSC receiver.</p>
+            </div>
+            <form id="targetForm" class="target-form">
+              <label><span>Host / IP</span><input id="targetHost" name="host" value="127.0.0.1" autocomplete="off" required /></label>
+              <label><span>Port</span><input id="targetPort" name="port" value="8000" type="number" min="1" max="65535" required /></label>
+              <button class="primary-button" type="submit">Apply target</button>
+            </form>
+          </section>
+
+          <section aria-labelledby="modulesTitle">
+            <div class="section-heading outside">
+              <div><p class="section-kicker">Saved modules</p><h2 id="modulesTitle">Controls</h2></div>
+              <p class="helper">Values, names, addresses, and presets persist between launches.</p>
+            </div>
+            <form id="addModuleForm" class="add-module panel">
+              <label><span>Module type</span>
+                <select id="newModuleType">
+                  <option value="slider">Slider</option>
+                  <option value="trigger">Trigger button</option>
+                  <option value="toggle">Toggle button</option>
+                  <option value="xy1">Single-point XY</option>
+                  <option value="xy2">Two-point XY</option>
+                </select>
+              </label>
+              <label><span>Unique title</span><input id="newModuleTitle" value="New control" required /></label>
+              <button class="primary-button add-button" type="submit"><span aria-hidden="true">＋</span> Add module</button>
+            </form>
+            <div id="modulesContainer" class="modules-grid" aria-live="polite"></div>
+          </section>
+
+          <section class="custom-section" aria-labelledby="customTitle">
+            <div class="section-heading outside">
+              <div><p class="section-kicker">One-off messages</p><h2 id="customTitle">Custom sends</h2></div>
+              <button class="outline-button" id="addCustomButton" type="button"><span aria-hidden="true">＋</span> Add custom send</button>
+            </div>
+            <div id="customContainer" class="custom-list"></div>
+          </section>
+        </main>
+
+        <aside class="side-column" id="sideColumn">
+          <section class="device-panel panel" aria-labelledby="devicesTitle">
+            <div class="log-heading">
+              <div><p class="section-kicker">Outputs</p><h2 id="devicesTitle">Devices</h2></div>
+              <span class="device-count" id="deviceCount">0</span>
+            </div>
+            <div class="destination-device" id="destinationDevice">
+              <span class="device-status-dot" aria-hidden="true"></span>
+              <div><strong>UDP destination</strong><code id="destinationEndpoint">127.0.0.1:8000</code></div>
+              <span class="device-state">Ready</span>
+            </div>
+            <ol id="deviceList" aria-live="polite"></ol>
+          </section>
+          <section class="activity-panel panel" id="activityPanel" aria-labelledby="logTitle">
+            <div class="log-heading">
+              <div><p class="section-kicker live-indicator">Live</p><h2 id="logTitle">Activity</h2></div>
+              <button id="clearLogButton" class="text-button" type="button">Clear</button>
+            </div>
+            <ol id="activityLog" aria-live="polite"></ol>
+          </section>
+        </aside>
+      </div>
+    </div>
+  </body>
+</html>

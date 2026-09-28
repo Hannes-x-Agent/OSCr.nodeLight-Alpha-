@@ -1,0 +1,67 @@
+name: Build desktop release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  macos:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - run: npm run verify
+      - run: npm run package:mac
+      - run: |
+          mkdir -p release
+          ditto -c -k --sequesterRsrc --keepParent "dist/OSCrnode Light 0.1A-darwin-arm64/OSCrnode Light 0.1A.app" "release/OSCrnode-Light-0.1A-macOS-Apple-Silicon.zip"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos-release
+          path: release/*.zip
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - run: npm run verify
+      - run: npm run package:win
+      - shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force release | Out-Null
+          Compress-Archive -Path "dist/OSCrnode Light 0.1A-win32-x64" -DestinationPath "release/OSCrnode-Light-0.1A-Windows-x64.zip"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-release
+          path: release/*.zip
+
+  publish:
+    needs: [macos, windows]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: "*-release"
+          path: release
+          merge-multiple: true
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" release/* \
+            --title "OSCrnode Light 0.1A" \
+            --notes "First alpha release of the modular osc.js control surface. macOS is for Apple Silicon; Windows is for 64-bit PCs."

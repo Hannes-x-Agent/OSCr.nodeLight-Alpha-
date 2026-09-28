@@ -1,0 +1,7 @@
+node_modules/
+dist/
+release/
+preview*.png
+.DS_Store
+npm-debug.log*
+.oscrnode-light-state.json*
